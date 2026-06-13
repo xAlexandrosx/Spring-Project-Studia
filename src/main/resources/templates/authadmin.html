@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Noted - Admin Login</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .auth-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 350px; }
+        h2 { margin-top: 0; color: #333; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #666; font-size: 14px; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #2ecc71; border: none; color: white; font-size: 16px; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #27ae60; }
+        .error-msg { color: #e74c3c; font-size: 14px; text-align: center; margin-bottom: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="auth-container">
+    <h2 id="form-title">Admin Login</h2>
+    <div id="error" class="error-msg"></div>
+
+    <form id="auth-form">
+        <div class="form-group">
+            <label>Admin Username</label>
+            <input type="text" id="login" required>
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password" required>
+        </div>
+
+        <button type="submit" id="submit-btn">Sign In As Admin</button>
+    </form>
+</div>
+
+<script>
+    document.getElementById('auth-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const errorDiv = document.getElementById('error');
+        errorDiv.style.display = 'none';
+
+        const loginVal = document.getElementById('login').value;
+        const passwordVal = document.getElementById('password').value;
+
+        // Targets the specialized admin auth pipeline
+        const response = await fetch('/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ login: loginVal, password: passwordVal })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('jwt_token', data.token);
+
+            // Directly push to administration dashboard upon successful check
+            window.location.href = '/admin-panel';
+        } else {
+            errorDiv.innerText = 'Invalid admin username or password';
+            errorDiv.style.display = 'block';
+        }
+    });
+</script>
+</body>
+</html>

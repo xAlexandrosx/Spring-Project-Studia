@@ -11,6 +11,11 @@ public class ViewController {
         return "auth";
     }
 
+    @GetMapping("/loginAdmin")
+    public String showAdminLoginPage() {
+        return "authadmin";
+    }
+
     @GetMapping("/dashboard")
     public String showDashboardPage() {
         return "dashboard";
