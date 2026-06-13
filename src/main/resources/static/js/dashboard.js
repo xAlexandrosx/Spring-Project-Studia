@@ -459,6 +459,120 @@ function switchToDashboard() {
     loadDashboard();
 }
 
+function logout() { localStorage.removeItem('jwt_token'); window.location.href = '/login'; }
+
+// --- Notion-style Category Manager Dropdown & Pillbox Handling Engine ---
+
+function focusPillboxInput(inputId) {
+    const input = document.getElementById(inputId);
+    if (input) input.focus();
+}
+
+function showNotionDropdown(dropdownId, inputId) {
+    if (!isCurrentlyEditing) return; // Ignore input actions if item context is read-only
+
+    const dropdown = document.getElementById(dropdownId);
+    const input = document.getElementById(inputId);
+    if (!dropdown) return;
+
+    dropdown.style.display = 'block';
+    filterNotionDropdown(dropdownId, input.value);
+
+    // Global hook click events to dismiss picker drop windows cleanly
+    const closeDropdownHandler = function(e) {
+        if (!e.target.closest('.notion-cat-container')) {
+            dropdown.style.display = 'none';
+            document.removeEventListener('click', closeDropdownHandler);
+        }
+    };
+    setTimeout(() => document.addEventListener('click', closeDropdownHandler), 50);
+}
+
+function filterNotionDropdown(dropdownId, query) {
+    const prefix = dropdownId.split('-')[0];
+    const listContainer = document.getElementById(`${prefix}-options-list`);
+    const createBtn = document.getElementById(`${prefix}-create-btn`);
+
+    if (!listContainer) return;
+    listContainer.innerHTML = '';
+
+    const cleanQuery = query.trim().toLowerCase();
+
+    // Isolate active unused choices matching input text filters
+    const availableCategories = dynamicGlobalCategories.filter(cat =>
+        !currentEditingCategoryIds.includes(cat.id) &&
+        cat.name.toLowerCase().includes(cleanQuery)
+    );
+
+    availableCategories.forEach(cat => {
+        const option = document.createElement('div');
+        option.className = 'notion-option';
+        option.innerText = cat.name;
+        option.onclick = () => selectCategoryOption(prefix, cat.id);
+        listContainer.appendChild(option);
+    });
+
+    // Handle "On-The-Fly" runtime element creation UI changes
+    if (createBtn) {
+        const exactMatchExists = dynamicGlobalCategories.some(cat => cat.name.toLowerCase() === cleanQuery);
+
+        if (cleanQuery.length >= 2 && !exactMatchExists) {
+            createBtn.style.display = 'block';
+            createBtn.innerHTML = `Create "<strong>${query}</strong>"`;
+            createBtn.onclick = () => createCategoryOnTheFly(prefix, query);
+        } else {
+            createBtn.style.display = 'none';
+        }
+    }
+}
+
+function selectCategoryOption(prefix, categoryId) {
+    if (!currentEditingCategoryIds.includes(categoryId)) {
+        currentEditingCategoryIds.push(categoryId);
+    }
+
+    const input = document.getElementById(`${prefix}-cat-input`);
+    if (input) input.value = '';
+
+    const dropdown = document.getElementById(`${prefix}-dropdown`);
+    if (dropdown) dropdown.style.display = 'none';
+
+    renderPillboxInterface(`${prefix}-pillbox`, `${prefix}-cat-input`, `${prefix}-dropdown`, true);
+}
+
+async function createCategoryOnTheFly(prefix, categoryName) {
+    try {
+        const response = await fetch('/api/categories', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name: categoryName.trim() })
+        });
+
+        if (response.ok) {
+            const newCategory = await response.json();
+
+            // Push directly to internal definitions cache
+            dynamicGlobalCategories.push(newCategory);
+
+            // Instantly toggle option selection inside operational layout arrays
+            selectCategoryOption(prefix, newCategory.id);
+        } else {
+            alert("Failed to save new category.");
+        }
+    } catch (err) {
+        console.error("Error creating category on the fly:", err);
+    }
+}
+
+function removePillBadge(event, prefix, categoryId, inputId, dropdownId) {
+    if (event) event.stopPropagation();
+    currentEditingCategoryIds = currentEditingCategoryIds.filter(id => id !== categoryId);
+    renderPillboxInterface(`${prefix}-pillbox`, inputId, dropdownId, isCurrentlyEditing);
+}
+
 function renderPillboxInterface(pillboxId, inputId, dropdownId, isEditable = false) {
     const box = document.getElementById(pillboxId);
     if (!box) return;
@@ -469,9 +583,11 @@ function renderPillboxInterface(pillboxId, inputId, dropdownId, isEditable = fal
     if (isEditable) {
         box.classList.remove('disabled-pillbox');
         box.style.pointerEvents = "auto";
+        if (input) input.style.display = "inline-block";
     } else {
         box.classList.add('disabled-pillbox');
         box.style.pointerEvents = "none";
+        if (input) input.style.display = "none";
     }
 
     currentEditingCategoryIds.forEach(id => {
@@ -485,8 +601,6 @@ function renderPillboxInterface(pillboxId, inputId, dropdownId, isEditable = fal
         box.insertBefore(badge, input);
     });
 }
-
-function logout() { localStorage.removeItem('jwt_token'); window.location.href = '/login'; }
 
 // --- Initialization Entry Point ---
 function init() {
