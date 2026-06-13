@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin System Management</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f4f4f4; color: #333; }
+        h1, h2 { border-bottom: 2px solid #333; padding-bottom: 5px; }
+        .top-bar { display: flex; justify-content: space-between; margin-bottom: 20px; background: #ddd; padding: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; background: white; }
+        th, td { border: 1px solid #999; padding: 8px; text-align: left; }
+        th { background: #eee; }
+        button { cursor: pointer; padding: 4px 8px; font-family: monospace; margin-right: 5px; }
+        .btn-danger { background: #ffcccc; color: #cc0000; }
+        .btn-safe { background: #ccffcc; color: #006600; }
+        .badge-shared { background: #ffe6cc; color: #b35900; font-weight: bold; padding: 2px 5px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <span id="admin-greeting">Logged in as Admin</span>
+    <button onclick="logout()">Logout & Return to Main</button>
+</div>
+
+<h1>System Administration Dashboard</h1>
+
+<h2>Registered Users</h2>
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Username (Login)</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody id="users-table-body">
+    </tbody>
+</table>
+
+<h2>All System Notes & TOS Monitoring</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Note ID</th>
+        <th>Owner</th>
+        <th>Title</th>
+        <th>Content Snippet</th>
+        <th>Status</th>
+        <th>Created Date</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody id="notes-table-body">
+    </tbody>
+</table>
+
+<script>
+    const token = localStorage.getItem('jwt_token');
+    if (!token) window.location.href = '/login';
+
+    async function loadAdminData() {
+        try {
+            const userRes = await fetch('/auth/users', { headers: { 'Authorization': 'Bearer ' + token } });
+            if (userRes.ok) {
+                renderUsers(await userRes.json());
+            } else {
+                console.error("Failed to load users layout.");
+            }
+
+            const noteRes = await fetch('/api/notes/admin/all', { headers: { 'Authorization': 'Bearer ' + token } });
+            if (noteRes.ok) {
+                renderNotes(await noteRes.json());
+            } else {
+                console.error("Failed to load platform global notes layout.");
+            }
+        } catch (err) {
+            alert("Security unauthorized access or server connection failure.");
+        }
+    }
+
+    function renderUsers(users) {
+        const tbody = document.getElementById('users-table-body');
+        tbody.innerHTML = users.map(user => {
+            // Support fields fallback chain matching typical UserResponseDto structures
+            const userLogin = user.logins || user.login || user.username || "N/A";
+            const fName = user.firstNames || user.firstName || "";
+            const lName = user.lastNames || user.lastName || "";
+
+            return `
+                <tr>
+                    <td>${user.id}</td>
+                    <td><b>${userLogin}</b></td>
+                    <td>${fName}</td>
+                    <td>${lName}</td>
+                    <td>
+                        <button class="btn-danger" onclick="deleteUser(${user.id})">Delete User Account</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderNotes(notes) {
+        const tbody = document.getElementById('notes-table-body');
+        tbody.innerHTML = notes.map(note => {
+            let ownerDisplayName = "Unknown Owner";
+            if (note.owner) {
+                const f = note.owner.firstNames || note.owner.firstName || "";
+                const l = note.owner.lastNames || note.owner.lastName || "";
+                ownerDisplayName = `${f} ${l}`.trim() || `User ID: ${note.owner.id}`;
+            } else if (note.ownerName) {
+                ownerDisplayName = note.ownerName;
+            }
+
+            const isShared = (note.sharedUserIds && note.sharedUserIds.length > 0) ||
+                (note.sharedUsers && note.sharedUsers.length > 0) ||
+                note.shared === true;
+            const statusBadge = isShared ? '<span class="badge-shared">PUBLIC / SHARED</span>' : 'Private';
+
+            const rawDate = note.dateAdded || note.createdAt;
+            const formattedDate = rawDate ? new Date(rawDate).toLocaleString() : "Unknown Date";
+
+            return `
+                <tr>
+                    <td>${note.id}</td>
+                    <td>${ownerDisplayName}</td>
+                    <td><span id="title-${note.id}" contenteditable="true" style="background:#fffde6; padding: 2px; display: block; min-width: 100px;">${note.title || ''}</span></td>
+                    <td><span id="content-${note.id}" contenteditable="true" style="background:#fffde6; padding: 2px; display: block; min-width: 200px;">${note.content || ''}</span></td>
+                    <td>${statusBadge}</td>
+                    <td>${formattedDate}</td>
+                    <td>
+                        <button class="btn-safe" onclick="updateNoteContent(${note.id})">Save Edit</button>
+                        <button class="btn-danger" onclick="deleteNoteByAdmin(${note.id})">Remove (TOS)</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    async function deleteUser(id) {
+        if(!confirm(`Are you absolutely sure you want to delete User #${id}? This will purge their personal notes profile completely.`)) return;
+        const res = await fetch(`/auth/users/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+        if(res.ok) {
+            loadAdminData();
+        } else {
+            alert("Could not perform operation. Ensure endpoint constraints permit execution.");
+        }
+    }
+
+    async function updateNoteContent(id) {
+        const title = document.getElementById(`title-${id}`).innerText.trim();
+        const content = document.getElementById(`content-${id}`).innerText.trim();
+
+        const res = await fetch(`/api/notes/admin/${id}`, {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, content })
+        });
+        if(res.ok) {
+            alert("Note item modified successfully via Admin privileges.");
+            loadAdminData();
+        } else {
+            alert("Failed to overwrite data. Check validation layout constraints.");
+        }
+    }
+
+    async function deleteNoteByAdmin(id) {
+        if(!confirm(`Purge note entry #${id} due to TOS violation?`)) return;
+        const res = await fetch(`/api/notes/admin/${id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+        if(res.ok) {
+            loadAdminData();
+        } else {
+            alert("Could not process admin purge action.");
+        }
+    }
+
+    function logout() { localStorage.removeItem('jwt_token'); window.location.href = '/login'; }
+
+    loadAdminData();
+</script>
+</body>
+</html>

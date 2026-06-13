@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: insert-initial-roles
+      author: aleksander
+      changes:
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: types
+                  value: ROLE_ADMIN
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: types
+                  value: ROLE_FULL_USER
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: types
+                  value: ROLE_LIMITED_USER
