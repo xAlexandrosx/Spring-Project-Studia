@@ -26,10 +26,8 @@ model: user
 Roles:
 admin: manage users
 
-limited user: registered, open shared notes,  cant create notes
-
 full user: create notes, share notes, open notes
 
-
-
 guest: only see start page and log in page
+
+Current issue: Logging as admin should transport the user to admin-panel.html. Instead they are redirected to normal dashboard.
