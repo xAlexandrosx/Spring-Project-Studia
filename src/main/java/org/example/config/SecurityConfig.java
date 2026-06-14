@@ -37,6 +37,7 @@ public class SecurityConfig {
                                 "/auth/login"
                         ).permitAll()
                         .requestMatchers(
+                                "/",
                                 "/login",
                                 "/my-notes",
                                 "/note-editor",
