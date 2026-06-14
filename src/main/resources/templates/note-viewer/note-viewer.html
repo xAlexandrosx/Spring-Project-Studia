@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Note</title>
+
+    <link rel="stylesheet" href="/navbar/navbar.css">
+    <link rel="stylesheet" href="/note-viewer/note-viewer.css">
+
+    <script src="/navbar/navbar.js" defer></script>
+    <script src="/note-viewer/note-viewer.js" defer></script>
+</head>
+<body>
+<div id="navbar-container">
+    <nav class="navbar">
+        <div class="nav-left">
+            <button onclick="window.location.href='/my-notes'">My Notes</button>
+            <button onclick="window.location.href='/note-editor'">Add New Note</button>
+            <button onclick="window.location.href='/categories'">Categories</button>
+        </div>
+        <div class="nav-right">
+            <span id="user-identity">Loading user...</span>
+            <button id="logout-btn" onclick="logout()">Log Out</button>
+        </div>
+    </nav>
+</div>
+
+<div class="viewer-container">
+    <div class="header-row">
+        <h1 id="note-title">Loading Title...</h1>
+        <span id="visibility-badge" class="badge">Checking...</span>
+    </div>
+    <p id="note-meta" class="meta-data">Fetching metadata...</p>
+    <hr>
+
+    <div id="note-content" class="content-box"></div>
+
+    <div id="note-categories-box" class="categories-container">
+        <strong>Categories attached:</strong> <span id="categories-list">None</span>
+    </div>
+
+    <hr>
+    <div class="action-row">
+        <button id="edit-btn">Edit Note</button>
+        <button id="share-btn">Generate Share Link</button>
+        <button id="delete-btn" class="danger-btn">Delete Note</button>
+        <button id="back-btn" onclick="window.location.href='/my-notes'">Go Back</button>
+    </div>
+
+    <p id="viewer-status-msg" class="status-msg"></p>
+</div>
+
+</body>
+</html>

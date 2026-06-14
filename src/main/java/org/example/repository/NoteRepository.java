@@ -13,10 +13,8 @@ import java.util.Optional;
 @Repository
 public interface NoteRepository extends JpaRepository<Note, Long> {
 
-    List<Note> findAllBySharedUsersId(Long sharedUserId);
-
-    @Query("SELECT n FROM Note n JOIN n.sharedUsers u WHERE n.id = :id AND u.id = :userId")
-    Optional<Note> findSharedNoteByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
+    @Query("SELECT n FROM Note n WHERE n.shared = 1")
+    List<Note> getSharedNotesViaCustomQuery();
 
     Optional<Note> findByIdAndOwnerId(Long id, Long ownerId);
 
@@ -28,9 +26,6 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
     List<Note> findAllByCategoriesIdsIn(@Param("ids") List<Long> ids, @Param("ownerId") Long ownerId);
 
     @Modifying
-    @Query(value =
-            "DELETE FROM note_categories " +
-            "WHERE category_id = :categoryId",
-            nativeQuery = true)
+    @Query(value = "DELETE FROM note_categories WHERE category_id = :categoryId", nativeQuery = true)
     void deleteCategoryAssociations(@Param("categoryId") Long categoryId);
 }

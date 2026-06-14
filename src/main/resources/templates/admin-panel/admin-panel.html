@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin System Management</title>
+    <link rel="stylesheet" href="/admin-panel/admin-panel.css">
+    <script src="/admin-panel/admin-panel.js" defer></script>
+</head>
+<body>
+
+<div class="top-bar">
+    <span>Logged in as Admin</span>
+    <button onclick="logout()">Logout</button>
+</div>
+
+<h1>System Administration Dashboard</h1>
+<hr>
+
+<div id="users-directory-view" class="admin-section">
+    <h2>Registered Platform Users</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Username (Click to Type)</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Birthday</th>
+            <th>Assigned Role</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="users-table-body">
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

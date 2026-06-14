@@ -3,7 +3,6 @@ package org.example.dto.category;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.dto.user.UserResponseDto;
-import org.example.model.User;
 
 @Getter
 @Setter

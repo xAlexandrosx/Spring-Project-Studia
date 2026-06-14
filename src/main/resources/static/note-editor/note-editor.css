@@ -1,0 +1,127 @@
+.editor-container {
+    max-width: 650px;
+    margin: 30px auto;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ccc;
+    font-family: monospace;
+}
+
+h1 {
+    margin-top: 0;
+    color: #0066cc;
+    font-size: 20px;
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+    color: #444;
+}
+
+input[type="text"], select, textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    box-sizing: border-box;
+    font-family: monospace;
+    border: 1px solid #aaa;
+}
+
+textarea {
+    resize: vertical;
+}
+
+.action-row {
+    margin-top: 25px;
+    display: flex;
+    gap: 10px;
+}
+
+#save-btn {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+#save-btn:hover {
+    background-color: #219653;
+}
+
+#cancel-btn {
+    background-color: #7f8c8d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-family: monospace;
+}
+
+#cancel-btn:hover {
+    background-color: #95a5a6;
+}
+
+.status-msg {
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.available-categories-box {
+    margin-top: 30px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 6px;
+    border: 1px dashed #dee2e6;
+}
+
+.available-categories-box h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 15px;
+    color: #495057;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.categories-pill-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.category-pill {
+    background-color: #e3fafc;
+    color: #0b7285;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid #c5f6fa;
+    transition: all 0.2s ease-in-out;
+    user-select: none;
+}
+
+.category-pill:hover {
+    background-color: #0b7285;
+    color: #ffffff;
+    border-color: #0b7285;
+    transform: translateY(-1px);
+}
+
+.available-categories-box .loading-text,
+.available-categories-box .empty-text {
+    font-size: 14px;
+    color: #868e96;
+    font-style: italic;
+}
+
+.available-categories-box .error-text {
+    font-size: 14px;
+    color: #fa5252;
+}

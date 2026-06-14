@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note Editor</title>
+
+    <link rel="stylesheet" href="/navbar/navbar.css">
+    <link rel="stylesheet" href="/note-editor/note-editor.css">
+
+    <script src="/navbar/navbar.js" defer></script>
+    <script src="/note-editor/note-editor.js" defer></script>
+</head>
+<body>
+
+<div id="navbar-container">
+    <nav class="navbar">
+        <div class="nav-left">
+            <button onclick="window.location.href='/my-notes'">My Notes</button>
+            <button onclick="window.location.href='/note-editor'">Add New Note</button>
+            <button onclick="window.location.href='/categories'">Categories</button>
+        </div>
+        <div class="nav-right">
+            <span id="user-identity">Loading user...</span>
+            <button id="logout-btn" onclick="logout()">Log Out</button>
+        </div>
+    </nav>
+</div>
+
+<div class="editor-container">
+    <h1 id="editor-title-display">Edit Note</h1>
+    <hr>
+
+    <form id="note-form">
+        <label for="note-title">Note Title:</label>
+        <input type="text" id="note-title" required minlength="3" maxlength="20" placeholder="e.g., My Secret Recipe">
+
+        <label for="note-content">Note Content:</label>
+        <textarea id="note-content" required minlength="5" rows="8" placeholder="Type text body here..."></textarea>
+
+        <label for="note-categories">Categories (Comma-separated names):</label>
+        <input type="text" id="note-categories" placeholder="e.g., Work, Personal, Recipes">
+
+        <label for="note-visibility">Visibility Context:</label>
+        <select id="note-visibility">
+            <option value="private">Private</option>
+            <option value="public">Public</option>
+        </select>
+
+        <div class="action-row">
+            <button type="submit" id="save-btn">Save Content</button>
+            <button type="button" id="cancel-btn" onclick="window.location.href='/my-notes'">Cancel & Exit</button>
+        </div>
+    </form>
+
+    <p id="editor-status-msg" class="status-msg"></p>
+
+    <div id="available-categories-box" class="available-categories-box">
+        <h3>Your Available Categories:</h3>
+        <div id="categories-pill-cloud" class="categories-pill-cloud">
+            <span class="loading-text">Loading your available categories...</span>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

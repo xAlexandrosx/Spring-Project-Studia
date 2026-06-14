@@ -1,33 +1,63 @@
+Szczegółowe funkcjonalności, full user (19p):
 
-`mvn clean package`
+● dodanie/edycja/usunięcie przez siebie zebranych informacji - 5p.
+Klasa NoteController metody crud z adn @PreAuthorize
 
-Aplkiacja do przechowywania informacji
-zapisywanie informacji
-udostępnianie innym
-przeglądanie
-przeszukiwanie
+● Walidacja formularza - 1p.
+UserRegistrationRequestDto
+UserLoginRequestDto
+CreateCategoryRequestDto
+CreateNoteRequestDto
+katalog /validation/user
 
-model: note
-- title (3-20)
-- content (5-500)
-- date_added
-- category
+● Edycja na danych bieżących - 1p.
+Klasa NoteController metody crud z adn @PreAuthorize
 
-model: category
-- name (3-20 lowercase)
+● Dodanie nowej kategorii - 1p.
+Klasa CategoryController metody crud z adn @PreAuthorize
 
-model: user
-- firstName (3-20 first uppercase)
-- lastName (3-50 first uppercase)
-- login (3-20 lowercase)
-- password (5+)
-- age (18+)
+● Wyświetlenie udostępnionych przez innych informacji - 2p.
+Klasa NoteController metody crud z adn @PreAuthorize
 
-Roles:
-admin: manage users
+● udostępnienie : ze wskazaniem na konkretnego użytkownika lub w linku - 1p.
+Klasa NoteController metoda getNoteById może być użyta przez
+niezalogowanego użytkownika. System sprawdza tylko czy
+notatka ma status publiczna.
 
-full user: create notes, share notes, open notes
+● Wyświetlanie “swoich” informacji: sortowanie w obu kierunkach (data, kategoria, alfabetycznie) - 2p.
+● Filtrowanie według daty (od aktualnej) i kategorii (od najbardziej popularnej) - 2p.
+Klasa NoteController metody crud z adn @PreAuthorize - wyświetlanie
+my-notes.html - sortowanie (na frontendzie)
 
-guest: only see start page and log in page
+● Zapamiętanie kierunków i kryteriów sortowania - 1p.
+brak
 
-Current issue: Logging as admin should transport the user to admin-panel.html. Instead they are redirected to normal dashboard.
+● Logowanie - 1p.
+AuthenticationController
+
+● Zapis do bazy danych dopiero przy wylogowaniu/wygaśnięciu sesji - 2p.
+baza jest aktualizowana na bierząco
+
+StoreEverything 50p.
+Szczegółowe funkcjonalności niezalogowany (4p):
+● Rejestracja - 1p.
+● Walidacja formularza - 1p.
+● Strona powitalna - 1p.
+● Wyświetlenie informacji z udostępnionego linku - 1p.
+
+Szczegółowe funkcjonalności, admin (2p):
+● Wyśw. listy użytkowników - 1p.
+● Zarządzanie rolami - 1p.
+
+StoreEverything 50p.
+Elementy techniczne (25p.):
+● Kontrolery - 2p.
+● Baza danych (co najmniej 2 tabele z relacją) - 5p.
+● Widoki: formularze z walidacją (3 różne elementy), 5 różnych
+znaczników Thymeleafa - 3p.+2p.
+● Sesja - 2p.
+● Ciasteczka - 1p.
+● Usługa REST (do weryfikacji nazwy kategorii w słowniku) - 3p.
+category repository
+● Klient REST - 2p.
+● Spring Security - 5p. (z bazą danych), 3p. (w pamięci)

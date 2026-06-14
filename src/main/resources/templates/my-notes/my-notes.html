@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Notes</title>
+
+    <link rel="stylesheet" href="/navbar/navbar.css">
+    <link rel="stylesheet" href="/my-notes/my-notes.css">
+
+    <script src="/navbar/navbar.js" defer></script>
+    <script src="/my-notes/my-notes.js" defer></script>
+</head>
+<body>
+<div id="navbar-container">
+    <nav class="navbar">
+        <div class="nav-left">
+            <button onclick="window.location.href='/my-notes'">My Notes</button>
+            <button onclick="window.location.href='/note-editor'">Add New Note</button>
+            <button onclick="window.location.href='/categories'">Categories</button>
+        </div>
+        <div class="nav-right">
+            <span id="user-identity">Loading user...</span>
+            <button id="logout-btn" onclick="logout()">Log Out</button>
+        </div>
+    </nav>
+</div>
+
+<div class="search-sort-container">
+    <input type="text" id="search-input" placeholder="Search by title or tag name...">
+
+    <select id="sort-select">
+        <option value="date-desc">Date Added (Newest First)</option>
+        <option value="date-asc">Date Added (Oldest First)</option>
+        <option value="title-asc">Title (A-Z)</option>
+        <option value="title-desc">Title (Z-A)</option>
+        <option value="category-asc">Tag Name (A-Z)</option>
+        <option value="category-desc">Tag Name (Z-A)</option>
+    </select>
+</div>
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>My Personal Notes</h1>
+        <button onclick="window.location.href='/note-editor'" class="create-btn">+ Create New Note</button>
+    </div>
+    <hr>
+
+    <p id="dashboard-status-msg" class="status-msg">Fetching data from backend array index...</p>
+
+    <div id="notes-grid" class="notes-grid-layout"></div>
+</div>
+
+</body>
+</html>

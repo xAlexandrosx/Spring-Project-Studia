@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
-      id: 1
-      author: Aleksander Kozlowski
+      id: 1-create-users-table
+      author: hibernate-to-liquibase
       changes:
         - createTable:
             tableName: users
@@ -28,7 +28,6 @@ databaseChangeLog:
                   type: VARCHAR(255)
                   constraints:
                     nullable: false
-                    unique: true
               - column:
                   name: passwords
                   type: VARCHAR(255)
@@ -40,6 +39,10 @@ databaseChangeLog:
                   constraints:
                     nullable: false
 
+  - changeSet:
+      id: 2-create-roles-table
+      author: hibernate-to-liquibase
+      changes:
         - createTable:
             tableName: roles
             columns:
@@ -57,8 +60,8 @@ databaseChangeLog:
                     nullable: false
 
   - changeSet:
-      id: 2
-      author: student
+      id: 3-create-user-roles-join-table
+      author: hibernate-to-liquibase
       changes:
         - createTable:
             tableName: user_roles
@@ -76,24 +79,23 @@ databaseChangeLog:
         - addPrimaryKey:
             tableName: user_roles
             columnNames: user_id, role_id
+            constraintName: pk_user_roles
         - addForeignKeyConstraint:
             baseTableName: user_roles
             baseColumnNames: user_id
             referencedTableName: users
             referencedColumnNames: id
-            constraintName: fk_user_roles_user
-            onDelete: CASCADE
+            constraintName: fk_user_roles_on_user
         - addForeignKeyConstraint:
             baseTableName: user_roles
             baseColumnNames: role_id
             referencedTableName: roles
             referencedColumnNames: id
-            constraintName: fk_user_roles_role
-            onDelete: CASCADE
+            constraintName: fk_user_roles_on_role
 
   - changeSet:
-      id: 3
-      author: student
+      id: 4-create-categories-table
+      author: hibernate-to-liquibase
       changes:
         - createTable:
             tableName: categories
@@ -120,8 +122,12 @@ databaseChangeLog:
             baseColumnNames: owner_id
             referencedTableName: users
             referencedColumnNames: id
-            constraintName: fk_categories_owner
-            onDelete: CASCADE
+            constraintName: fk_categories_on_owner
+
+  - changeSet:
+      id: 5-create-notes-table-v2
+      author: hibernate-to-liquibase
+      changes:
         - createTable:
             tableName: notes
             columns:
@@ -139,12 +145,17 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: content
-                  type: TEXT
+                  type: VARCHAR(500)
                   constraints:
                     nullable: false
               - column:
                   name: date_added
-                  type: TIMESTAMP
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+              - column:
+                  name: shared
+                  type: INT
                   constraints:
                     nullable: false
               - column:
@@ -157,43 +168,12 @@ databaseChangeLog:
             baseColumnNames: owner_id
             referencedTableName: users
             referencedColumnNames: id
-            constraintName: fk_notes_owner
-            onDelete: CASCADE
+            constraintName: fk_notes_on_owner
 
   - changeSet:
-      id: 4
-      author: student
+      id: 6-create-note-categories-join-table
+      author: hibernate-to-liquibase
       changes:
-        - createTable:
-            tableName: note_shares
-            columns:
-              - column:
-                  name: note_id
-                  type: BIGINT
-                  constraints:
-                    nullable: false
-              - column:
-                  name: user_id
-                  type: BIGINT
-                  constraints:
-                    nullable: false
-        - addPrimaryKey:
-            tableName: note_shares
-            columnNames: note_id, user_id
-        - addForeignKeyConstraint:
-            baseTableName: note_shares
-            baseColumnNames: note_id
-            referencedTableName: notes
-            referencedColumnNames: id
-            constraintName: fk_note_shares_note
-            onDelete: CASCADE
-        - addForeignKeyConstraint:
-            baseTableName: note_shares
-            baseColumnNames: user_id
-            referencedTableName: users
-            referencedColumnNames: id
-            constraintName: fk_note_shares_user
-            onDelete: CASCADE
         - createTable:
             tableName: note_categories
             columns:
@@ -210,17 +190,16 @@ databaseChangeLog:
         - addPrimaryKey:
             tableName: note_categories
             columnNames: note_id, category_id
+            constraintName: pk_note_categories
         - addForeignKeyConstraint:
             baseTableName: note_categories
             baseColumnNames: note_id
             referencedTableName: notes
             referencedColumnNames: id
-            constraintName: fk_note_categories_note
-            onDelete: CASCADE
+            constraintName: fk_note_categories_on_note
         - addForeignKeyConstraint:
             baseTableName: note_categories
             baseColumnNames: category_id
             referencedTableName: categories
             referencedColumnNames: id
-            constraintName: fk_note_categories_category
-            onDelete: CASCADE
+            constraintName: fk_note_categories_on_category

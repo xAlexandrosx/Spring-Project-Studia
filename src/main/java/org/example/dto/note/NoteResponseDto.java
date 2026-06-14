@@ -12,6 +12,7 @@ public class NoteResponseDto {
     private String content;
     private LocalDateTime dateAdded;
     private List<Long> categoryIds;
+    private int shared;
 
     private UserResponseDto owner;
 }

@@ -21,6 +21,8 @@ public class CreateNoteRequestDto {
     @Size(min = 5, max = 500, message = "Content must be between 5 and 500 characters")
     private String content;
 
+    private int shared;
+
     @NotNull
     private List<Long> categoryIds = new ArrayList<>();
 }

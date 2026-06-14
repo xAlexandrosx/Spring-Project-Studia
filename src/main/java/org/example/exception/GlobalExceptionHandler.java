@@ -6,6 +6,7 @@ import org.example.dto.error.ApiErrorResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,6 +18,13 @@ import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiErrorResponseDto> handleIllegalStateException(
+            BadCredentialsException ex, HttpServletRequest request) {
+
+        return buildResponseEntity(HttpStatus.UNAUTHORIZED, "The note is no longer public.", request, null);
+    }
 
     @ExceptionHandler({EntityNotFoundException.class, UsernameNotFoundException.class})
     public ResponseEntity<ApiErrorResponseDto> handleNotFoundException(
@@ -30,6 +38,20 @@ public class GlobalExceptionHandler {
             BadCredentialsException ex, HttpServletRequest request) {
 
         return buildResponseEntity(HttpStatus.UNAUTHORIZED, "Invalid login credentials provided.", request, null);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiErrorResponseDto> handleAuthenticationException(
+            BadCredentialsException ex, HttpServletRequest request) {
+
+        return buildResponseEntity(HttpStatus.UNAUTHORIZED, "You do not have permission to perform that operation.", request, null);
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ApiErrorResponseDto> handleAuthorizationDeniedException(
+            AuthorizationDeniedException ex, HttpServletRequest request) {
+
+        return buildResponseEntity(HttpStatus.UNAUTHORIZED, "Access denied.", request, null);
     }
 
     @ExceptionHandler(RegistrationException.class)

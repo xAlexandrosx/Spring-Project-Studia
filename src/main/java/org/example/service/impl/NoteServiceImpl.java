@@ -5,18 +5,20 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.example.dto.note.CreateNoteRequestDto;
 import org.example.dto.note.NoteResponseDto;
+import org.example.exception.AuthenticationException;
 import org.example.mapper.NoteMapper;
+import org.example.model.Category;
 import org.example.model.Note;
-import org.example.model.User;
 import org.example.repository.CategoryRepository;
 import org.example.repository.NoteRepository;
 import org.example.repository.UserRepository;
 import org.example.service.NoteService;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 @Service
 @AllArgsConstructor
@@ -32,6 +34,7 @@ public class NoteServiceImpl implements NoteService {
     public NoteResponseDto createNote(CreateNoteRequestDto requestDto, Long ownerId) {
         Note note = noteMapper.toEntity(requestDto);
         note.setDateAdded(LocalDateTime.now());
+        note.setShared(0);
         note.setOwner(userRepository.findUserById(ownerId).orElseThrow(
                 () -> new EntityNotFoundException("Cannot find user with id: " + ownerId)
         ));
@@ -46,8 +49,24 @@ public class NoteServiceImpl implements NoteService {
     }
 
     @Override
-    public List<NoteResponseDto> findAll(Long ownerId) {
+    public NoteResponseDto findById(Long noteId, Long userId) {
+        Note note = noteRepository.findById(noteId).orElseThrow(
+                () -> new EntityNotFoundException("Cannot find note by id: " + noteId)
+        );
 
+        if (note.getShared() == 1) {
+            return noteMapper.toDto(note);
+        }
+
+        if (userId == null || !Objects.equals(userId, note.getOwner().getId())) {
+            throw new AuthenticationException("You don't have permission to see this note because it is private.");
+        }
+
+        return noteMapper.toDto(note);
+    }
+
+    @Override
+    public List<NoteResponseDto> findAll(Long ownerId) {
         return noteRepository.findAllByOwnerId(ownerId)
                 .stream()
                 .map(noteMapper::toDto)
@@ -59,21 +78,10 @@ public class NoteServiceImpl implements NoteService {
         if (ids == null || ids.isEmpty()) {
             return List.of();
         }
-
         return noteRepository.findAllByCategoriesIdsIn(ids, ownerId)
                 .stream()
                 .map(noteMapper::toDto)
                 .toList();
-    }
-
-    @Override
-    public NoteResponseDto getById(Long id, Long userId) {
-        return noteRepository.findByIdAndOwnerId(id, userId)
-                .map(noteMapper::toDto)
-                .orElseGet(() -> noteRepository.findSharedNoteByIdAndUserId(id, userId)
-                        .map(noteMapper::toDto)
-                        .orElseThrow(() -> new EntityNotFoundException("Cannot find note with id: " + id + " or access denied."))
-                );
     }
 
     @Override
@@ -85,11 +93,27 @@ public class NoteServiceImpl implements NoteService {
 
         noteMapper.updateNoteFromDto(requestDto, existingNote);
 
-        if (requestDto.getCategoryIds() != null && !requestDto.getCategoryIds().isEmpty()) {
-            existingNote.setCategories(categoryRepository.findAllById(requestDto.getCategoryIds()));
+        existingNote.setShared(requestDto.getShared());
+
+        if (requestDto.getCategoryIds() != null) {
+            List<Category> freshCategories = categoryRepository.findAllById(requestDto.getCategoryIds());
+            existingNote.getCategories().clear();
+            existingNote.getCategories().addAll(freshCategories);
         } else {
-            existingNote.setCategories(new ArrayList<>());
+            existingNote.getCategories().clear();
         }
+
+        Note savedNote = noteRepository.save(existingNote);
+        return noteMapper.toDto(savedNote);
+    }
+
+    @Override
+    public NoteResponseDto shareById(Long id, Long ownerId) {
+        Note existingNote = noteRepository.findByIdAndOwnerId(id, ownerId).orElseThrow(
+                () -> new EntityNotFoundException("Note not found or you don't have permission to modify it.")
+        );
+
+        existingNote.setShared(1);
 
         Note savedNote = noteRepository.save(existingNote);
         return noteMapper.toDto(savedNote);
@@ -101,42 +125,7 @@ public class NoteServiceImpl implements NoteService {
         Note note = noteRepository.findByIdAndOwnerId(noteId, ownerId).orElseThrow(
                 () -> new EntityNotFoundException("Note not found or you don't have permission to delete it.")
         );
-
         noteRepository.delete(note);
-    }
-
-    @Override
-    public List<NoteResponseDto> findSharedNotes(Long userId) {
-        return noteRepository.findAllBySharedUsersId(userId)
-                .stream()
-                .map(noteMapper::toDto)
-                .toList();
-    }
-
-    @Override
-    @Transactional
-    public NoteResponseDto shareWithAllOthers(Long noteId, Long ownerId) {
-        Note note = noteRepository.findByIdAndOwnerId(noteId, ownerId).orElseThrow(
-                () -> new EntityNotFoundException("Note not found or you don't have permission to share it.")
-        );
-
-        List<User> allOtherUsers = userRepository.findAll().stream()
-                .filter(user -> !user.getId().equals(ownerId))
-                .collect(Collectors.toCollection(ArrayList::new));
-
-        note.setSharedUsers(allOtherUsers);
-        Note savedNote = noteRepository.save(note);
-
-        return noteMapper.toDto(savedNote);
-    }
-
-    @Override
-    public List<NoteResponseDto> findAllGlobalNotesForAdmin() {
-        List<Note> allNotes = noteRepository.findAll();
-
-        return allNotes.stream()
-                .map(noteMapper::toDto)
-                .toList();
     }
 
     @Override
@@ -161,5 +150,25 @@ public class NoteServiceImpl implements NoteService {
         }
 
         noteRepository.deleteById(id);
+    }
+
+    @Override
+    public List<NoteResponseDto> findAllNotesByUserId(Long id) {
+        if(!userRepository.existsById(id)) {
+            throw new EntityNotFoundException("User not found with id: " + id);
+        }
+        return noteRepository.findAllByOwnerId(id)
+                .stream()
+                .map(noteMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    public NoteResponseDto setSharedStatusAsAdmin(Long id, int value) {
+        Note note = noteRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Note not found with id: " + id));
+        note.setShared(value);
+        Note updatedNote = noteRepository.save(note);
+        return noteMapper.toDto(updatedNote);
     }
 }

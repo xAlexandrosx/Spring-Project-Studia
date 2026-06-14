@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - User Notes Preview</title>
+    <link rel="stylesheet" href="/admin-panel/admin-usernotes-preview.css">
+    <script src="/admin-panel/admin-usernotes-preview.js" defer></script>
+</head>
+<body>
+
+<div class="top-bar">
+    <button onclick="goBack()">&larr; Go Back to Users Table</button>
+    <button onclick="logout()">Logout</button>
+</div>
+
+<h1 id="profile-title">Notes Profile Collection</h1>
+<hr>
+
+<table>
+    <thead>
+    <tr>
+        <th>Note ID</th>
+        <th>Title</th>
+        <th>Content</th>
+        <th>Visibility Status</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody id="profile-table-body">
+    <tr><td colspan="5">Loading user records...</td></tr>
+    </tbody>
+</table>
+
+</body>
+</html>

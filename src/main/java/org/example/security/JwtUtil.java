@@ -6,7 +6,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -14,35 +13,28 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private final SecretKey secretKey;
-    private final long expirationTime;
+    private final SecretKey secret;
 
-    public JwtUtil(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration}") long expirationTime) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.expirationTime = expirationTime;
+    @Value("${jwt.expiration}")
+    private long expirationTime;
+
+    public JwtUtil(@Value("${jwt.secret}") String secretString) {
+        secret = Keys.hmacShaKeyFor(secretString.getBytes(StandardCharsets.UTF_8));
     }
 
-
-    public String generateToken(String login) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expirationTime);
+    public String generateToken(String username) {
+        Date now = new Date(System.currentTimeMillis());
+        Date expiryDate = new Date(System.currentTimeMillis() + expirationTime);
 
         return Jwts.builder()
-                .subject(login)
+                .subject(username)
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(secretKey)
+                .signWith(secret)
                 .compact();
     }
 
-
-    public String getLoginFromToken(String token) {
-        return getClaims(token).getSubject();
-    }
-
-    public boolean validateToken(String token) {
+    public boolean isValidToken(String token) {
         try {
             return !getClaims(token).getExpiration().before(new Date());
         } catch (JwtException | IllegalArgumentException e) {
@@ -50,9 +42,13 @@ public class JwtUtil {
         }
     }
 
+    public String getUserLogin(String token) {
+        return getClaims(token).getSubject();
+    }
+
     private Claims getClaims(String token) {
         return Jwts.parser()
-                .verifyWith(secretKey)
+                .verifyWith(secret)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

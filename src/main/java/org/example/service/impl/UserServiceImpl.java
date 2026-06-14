@@ -32,10 +32,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserResponseDto createUser(UserRegistrationRequestDto requestDto) {
+    public UserResponseDto registerUser(UserRegistrationRequestDto requestDto) {
         if (userRepository.findByLogin(requestDto.getLogin()).isPresent()) {
             throw new RegistrationException("User with login '" + requestDto.getLogin() + "' already exists.");
         }
+
+        requestDto.setPassword(passwordEncoder.encode(requestDto.getPassword()));
 
         User user = userMapper.toEntity(requestDto);
 
@@ -55,28 +57,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponseDto getUserById(Long id) {
-        User user = userRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException("User not found with id: " + id)
-        );
-        return userMapper.toDto(user);
-    }
-
-    @Override
-    public UserResponseDto getUserByLogin(String login) {
-        User user = (User) userRepository.findByLogin(login).orElseThrow(
-                () -> new EntityNotFoundException("User not found with login: " + login)
-        );
-        return userMapper.toDto(user);
-    }
-
-
-    @Override
     public List<UserResponseDto> findAllUsers() {
-        return userRepository.findAll()
-                .stream()
-                .map(userMapper::toDto)
-                .toList();
+        List<User> rawUsers = userRepository.findAll();
+        System.out.println("DATABASE VALUE: " + rawUsers.get(0).getBirthday());
+
+        List<UserResponseDto> dtos = rawUsers.stream().map(userMapper::toDto).toList();
+        System.out.println("DTO VALUE: " + dtos.get(0).getBirthday());
+
+        return dtos;
     }
 
     @Override
@@ -106,5 +94,60 @@ public class UserServiceImpl implements UserService {
             throw new EntityNotFoundException("Cannot delete. User not found with id: " + id);
         }
         userRepository.deleteById(id);
+    }
+
+    @Override
+    public UserResponseDto addUserRole(Long userId, Long roleId) {
+        User existingUser = userRepository.findById(userId).orElseThrow(
+                () -> new EntityNotFoundException("Cannot update. User not found with id: " + userId)
+        );
+
+        Role role = roleRepository.findById(roleId).orElseThrow(
+                () -> new EntityNotFoundException("Role not found with id: " + roleId)
+        );
+
+        Set<Role> roles = existingUser.getRoles();
+        if (roles.contains(role)) {
+            throw new RuntimeException("User already has this role");
+        }
+
+        roles.add(role);
+        existingUser.setRoles(roles);
+        User savedUser = userRepository.save(existingUser);
+
+        return userMapper.toDto(savedUser);
+    }
+
+    @Override
+    public UserResponseDto removeUserRole(Long userId, Long roleId) {
+        User existingUser = userRepository.findById(userId).orElseThrow(
+                () -> new EntityNotFoundException("Cannot update. User not found with id: " + userId)
+        );
+
+        Role role = roleRepository.findById(roleId).orElseThrow(
+                () -> new EntityNotFoundException("Role not found with id: " + roleId)
+        );
+
+        Set<Role> roles = existingUser.getRoles();
+
+        if (!roles.contains(role)) {
+            return userMapper.toDto(existingUser);
+        }
+
+        roles.remove(role);
+        existingUser.setRoles(roles);
+        User savedUser = userRepository.save(existingUser);
+
+        return userMapper.toDto(savedUser);
+    }
+
+    @Override
+    public Set<Role> getAllRolesFromUser(Long userId) {
+
+        User existingUser = userRepository.findById(userId).orElseThrow(
+                () -> new EntityNotFoundException("Cannot update. User not found with id: " + userId)
+        );
+
+        return existingUser.getRoles();
     }
 }

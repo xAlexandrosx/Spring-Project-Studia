@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Categories</title>
+    <link rel="stylesheet" href="/navbar/navbar.css">
+    <link rel="stylesheet" href="/categories/categories.css">
+    <script src="/navbar/navbar.js" defer></script>
+    <script src="/categories/categories.js" defer></script>
+</head>
+<body>
+
+<div id="navbar-container">
+    <nav class="navbar">
+        <div class="nav-left">
+            <button onclick="window.location.href='/my-notes'">My Notes</button>
+            <button onclick="window.location.href='/note-editor'">Add New Note</button>
+            <button onclick="window.location.href='/categories'" class="active">Categories</button>
+        </div>
+        <div class="nav-right">
+            <span id="user-identity">Loading user...</span>
+            <button id="logout-btn" onclick="logout()">Log Out</button>
+        </div>
+    </nav>
+</div>
+
+<div class="categories-container">
+    <h1>Manage Categories</h1>
+    <hr>
+
+    <form id="create-category-form" class="category-form">
+        <input type="text" id="new-category-name" placeholder="Create new category name..." required minlength="2" maxlength="30">
+        <button type="submit" id="create-btn">Create Category</button>
+    </form>
+
+    <div class="controls-row">
+        <label for="sort-select">Sort categories by:</label>
+        <select id="sort-select">
+            <option value="alphabetical">Alphabetical (A-Z)</option>
+            <option value="popularity">Popularity</option>
+        </select>
+    </div>
+
+    <p id="categories-status-msg" class="status-msg"></p>
+
+    <ul id="categories-list" class="categories-list">
+    </ul>
+</div>
+
+</body>
+</html>

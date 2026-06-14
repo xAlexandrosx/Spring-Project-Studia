@@ -1,0 +1,126 @@
+body {
+    font-family: monospace;
+    background-color: #ffffff;
+    color: #222;
+    margin: 0;
+    padding: 0;
+}
+
+.categories-container {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 20px;
+}
+
+h1 {
+    margin: 0 0 15px 0;
+    color: #222;
+    font-size: 22px;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid #ccc;
+    margin-bottom: 20px;
+}
+
+.category-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.category-form input {
+    flex: 1;
+    padding: 8px 12px;
+    font-family: monospace;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    outline: none;
+}
+
+.category-form button {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.controls-row {
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #444;
+}
+
+.controls-row select {
+    padding: 4px 8px;
+    font-family: monospace;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.categories-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-top: 1px solid #ccc;
+}
+
+.category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+.category-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.category-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #222;
+}
+
+.category-badge {
+    font-size: 11px;
+    color: #777;
+}
+
+.item-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.action-btn {
+    font-family: monospace;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 6px 10px;
+    background-color: #eee;
+    color: #333;
+    text-decoration: none;
+    border: 1px solid #aaa;
+    cursor: pointer;
+}
+
+.status-msg {
+    font-weight: bold;
+    color: #555;
+    margin: 15px 0;
+}
+
+.empty-msg {
+    color: #777;
+    padding: 20px 0;
+    font-style: italic;
+}

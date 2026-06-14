@@ -1,0 +1,84 @@
+.viewer-container {
+    max-width: 700px;
+    margin: 30px auto;
+    padding: 25px;
+    background: #fff;
+    border: 1px solid #ccc;
+    font-family: monospace;
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1 {
+    margin: 0;
+    color: #222;
+    font-size: 24px;
+}
+
+.badge {
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: bold;
+    color: white;
+}
+
+.badge-private { background-color: #7f8c8d; }
+.badge-public { background-color: #2980b9; }
+
+.meta-data {
+    color: #666;
+    font-size: 12px;
+    margin: 5px 0 0 0;
+}
+
+.content-box {
+    min-height: 150px;
+    background: #fafafa;
+    border: 1px dashed #bbb;
+    padding: 15px;
+    margin: 20px 0;
+    white-space: pre-wrap;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.categories-container {
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+.action-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.action-row button {
+    padding: 10px 15px;
+    border: 1px solid #333;
+    background-color: #eee;
+    cursor: pointer;
+    font-family: monospace;
+}
+
+.action-row button:hover {
+    background-color: #ddd;
+}
+
+#edit-btn { background-color: #3498db; color: white; border: none; }
+#edit-btn:hover { background-color: #2980b9; }
+
+#share-btn { background-color: #f39c12; color: white; border: none; }
+#share-btn:hover { background-color: #d35400; }
+
+.action-row .danger-btn { background-color: #c0392b; color: white; border: none; }
+.action-row .danger-btn:hover { background-color: #962d22; }
+
+.status-msg {
+    margin-top: 15px;
+    font-weight: bold;
+}

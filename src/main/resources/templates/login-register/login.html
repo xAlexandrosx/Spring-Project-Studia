@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Noted'">Noted - API Sandbox</title>
+
+    <link rel="stylesheet" th:href="@{/login-register/login-style.css}">
+
+    <script th:src="@{/login-register/login-script.js}" defer></script>
+</head>
+<body>
+
+<h1 th:text="'Welcome to Noted'">Welcome to Noted</h1>
+<hr>
+
+<div class="system-banner" th:if="${true}">
+    <p style="font-size: 11px; color: #666; font-family: monospace; margin: 0 0 15px 0;">
+        System Status: Online | Client-Side API validation mode active.
+    </p>
+</div>
+
+<div class="api-box">
+    <form id="login-form">
+        <label>Login:</label>
+        <input type="text" id="login-username" required
+               pattern="[a-z]{3,20}"
+               title="Login must be between 3 and 20 lowercase letters only.">
+
+        <label>Password:</label>
+        <input type="password" id="login-password" required
+               minlength="5"
+               title="Password must be at least 5 characters long.">
+
+        <button type="submit">Execute Login</button>
+    </form>
+    <p id="login-message" class="message"></p>
+</div>
+
+<div class="api-box">
+    <form id="register-form">
+
+        <label>Login (Username):</label>
+        <input type="text" id="reg-username" required
+               pattern="[a-z]{3,20}"
+               title="3-20 characters, lowercase letters only.">
+        <span id="error-login" class="validation-error-span" style="color:red; font-size:12px; display:block;"></span>
+
+        <label>Password:</label>
+        <input type="password" id="reg-password" required minlength="5">
+        <span id="error-password" class="validation-error-span" style="color:red; font-size:12px; display:block;"></span>
+
+        <label>First Name:</label>
+        <input type="text" id="reg-firstname" required
+               pattern="[A-Z][a-zA-Z]{2,19}">
+
+        <label>Last Name:</label>
+        <input type="text" id="reg-lastname" required
+               pattern="[A-Z][a-zA-Z]{2,49}">
+
+        <label>Birthday (Must be 18+):</label>
+        <input type="date" id="reg-birthday" required>
+        <span id="error-birthday" class="validation-error-span" style="color:red; font-size:12px; display:block;"></span>
+
+        <button type="submit">Execute Register</button>
+    </form>
+    <p id="register-message" class="message"></p>
+</div>
+
+</body>
+</html>

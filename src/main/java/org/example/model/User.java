@@ -58,9 +58,6 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "owner", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Note> ownedNotes = new ArrayList<>();
 
-    @ManyToMany(mappedBy = "sharedUsers")
-    private List<Note> sharedNotes = new ArrayList<>();
-
     @OneToMany(mappedBy = "owner", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Category> usersNoteCategories = new ArrayList<>();
 

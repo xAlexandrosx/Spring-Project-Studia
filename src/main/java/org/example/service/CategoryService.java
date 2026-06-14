@@ -2,7 +2,6 @@ package org.example.service;
 
 import org.example.dto.category.CategoryResponseDto;
 import org.example.dto.category.CreateCategoryRequestDto;
-
 import java.util.List;
 
 public interface CategoryService {

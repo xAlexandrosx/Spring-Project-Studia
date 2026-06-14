@@ -1,15 +1,13 @@
-package org.example.security;
+package org.example.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.example.dto.user.UserLoginRequestDto;
-import org.example.dto.user.UserLoginResponseDto;
+import lombok.AllArgsConstructor;
 import org.example.dto.user.UserRegistrationRequestDto;
 import org.example.dto.user.UserResponseDto;
+import org.example.model.Role;
 import org.example.model.User;
-import org.example.service.AuthenticationService;
 import org.example.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,33 +23,25 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Set;
 
-@Tag(name = "Authentication Manager", description = "Endpoints for managing user authentication and accounts")
+@Tag(name = "User Management", description = "Endpoints for managing users")
 @RestController
-@RequiredArgsConstructor
-@RequestMapping(value = "/auth")
-public class AuthenticationController {
+@AllArgsConstructor
+@RequestMapping(value = "/api/users")
+public class UserController {
 
     private final UserService userService;
-    private final AuthenticationService authenticationService;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Register a new user",
             description = "Available to everyone. Validates and saves a new user into the database.")
     public UserResponseDto register(@RequestBody @Valid UserRegistrationRequestDto requestDto) {
-        return authenticationService.registerUser(requestDto);
+        return userService.registerUser(requestDto);
     }
 
-    @PostMapping("/login")
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "Login a user",
-            description = "Available to everyone. Authenticates credentials and returns a JWT/session token.")
-    public UserLoginResponseDto login(@RequestBody @Valid UserLoginRequestDto loginRequestDto) {
-        return authenticationService.loginUser(loginRequestDto);
-    }
-
-    @PutMapping("/users/{id}")
+    @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Update a user profile",
@@ -63,7 +53,42 @@ public class AuthenticationController {
         return userService.updateUserById(updateRequestDto, id);
     }
 
-    @DeleteMapping("/users/{id}")
+    @PutMapping("/addRole/{userId}/{roleId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Add a user role",
+            description = "Restricted to ADMIN users only.")
+    public UserResponseDto addUserRole(
+            @PathVariable Long userId,
+            @PathVariable Long roleId,
+            @AuthenticationPrincipal User adminUser) {
+        return userService.addUserRole(userId, roleId);
+    }
+
+    @PutMapping("/removeRole/{userId}/{roleId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Remove a user role",
+            description = "Restricted to ADMIN users only.")
+    public UserResponseDto removeUserRole(
+            @PathVariable Long userId,
+            @PathVariable Long roleId,
+            @AuthenticationPrincipal User adminUser) {
+        return userService.removeUserRole(userId, roleId);
+    }
+
+    @GetMapping("/roles/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Admin View: Fetch all users currently registered in the database")
+    public Set<Role> getAllRolesFromUser(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User adminUser) {
+
+        return userService.getAllRolesFromUser(id);
+    }
+
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete a user account",
@@ -72,11 +97,11 @@ public class AuthenticationController {
         userService.deleteById(id);
     }
 
-    @GetMapping("/users")
+    @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Admin View: Fetch all users currently registered in the database")
-    public List<UserResponseDto> getAllUsers() {
+    public List<UserResponseDto> getAllUsers(@AuthenticationPrincipal User adminUser) {
         return userService.findAllUsers();
     }
 }

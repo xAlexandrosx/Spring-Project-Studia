@@ -33,7 +33,7 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED) // 201 Created
+    @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new category")
     public CategoryResponseDto create(
             @Valid @RequestBody CreateCategoryRequestDto requestDto,
@@ -42,14 +42,15 @@ public class CategoryController {
     }
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK) // 200 OK
+    @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Get all categories belonging to the logged-in user")
-    public List<CategoryResponseDto> getAllMyCategories(@AuthenticationPrincipal User user) {
+    public List<CategoryResponseDto> getAllMyCategories(
+            @AuthenticationPrincipal User user) {
         return categoryService.findAll(user.getId());
     }
 
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK) // 200 OK
+    @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Get a specific category by its ID")
     public CategoryResponseDto getById(
             @PathVariable Long id,
@@ -58,7 +59,7 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK) // 200 OK
+    @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Update an existing category by its ID")
     public CategoryResponseDto updateById(
             @PathVariable Long id,
@@ -68,7 +69,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT) // 204 No Content
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete a category by its ID")
     public void deleteById(
             @PathVariable Long id,

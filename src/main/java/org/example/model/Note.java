@@ -36,13 +36,8 @@ public class Note {
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
-    @ManyToMany
-    @JoinTable(
-            name = "note_shares",
-            joinColumns = @JoinColumn(name = "note_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private List<User> sharedUsers = new ArrayList<>();
+    @Column(nullable = false)
+    private int shared;
 
     @ManyToMany
     @JoinTable(
