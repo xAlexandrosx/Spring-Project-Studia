@@ -5,20 +5,25 @@ document.getElementById('admin-login-form').addEventListener('submit', async fun
     const passwordInput = document.getElementById('login-password').value;
     const messageDisplay = document.getElementById('login-message');
 
+    if (!messageDisplay) return;
+
     messageDisplay.style.color = "blue";
     messageDisplay.innerText = "Processing admin credentials transaction...";
+
+    const formData = new URLSearchParams();
+    formData.append('login', usernameInput.trim());
+    formData.append('password', passwordInput);
 
     try {
         const response = await fetch('/auth/login', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ login: usernameInput, password: passwordInput })
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData.toString()
         });
 
         if (response.ok) {
-            const data = await response.json();
-
-            localStorage.setItem('jwt_token', data.token);
 
             messageDisplay.style.color = "green";
             messageDisplay.innerText = "Admin Authorized. Shifting to system terminal control panel...";
@@ -28,7 +33,7 @@ document.getElementById('admin-login-form').addEventListener('submit', async fun
             }, 1000);
         } else {
             messageDisplay.style.color = "red";
-            messageDisplay.innerText = `Authentication Failed. Status Code: ${response.status}`;
+            messageDisplay.innerText = `Authentication Failed. Invalid admin credentials or privilege structure.`;
         }
     } catch (err) {
         messageDisplay.style.color = "red";

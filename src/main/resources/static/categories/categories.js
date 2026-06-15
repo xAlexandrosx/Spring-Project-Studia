@@ -1,9 +1,24 @@
-
 let categoriesCache = [];
 
+function getCsrfConfig() {
+    const tokenEl = document.querySelector('meta[name="_csrf"]');
+    const headerEl = document.querySelector('meta[name="_csrf_header"]');
+
+    const headers = { 'Content-Type': 'application/json' };
+
+    if (tokenEl && headerEl) {
+        headers[headerEl.content] = tokenEl.content;
+    }
+
+    return headers;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById('sort-select').addEventListener('change', renderCategories);
-    document.getElementById('create-category-form').addEventListener('submit', handleCreateCategory);
+    const sortSelect = document.getElementById('sort-select');
+    const createForm = document.getElementById('create-category-form');
+
+    if (sortSelect) sortSelect.addEventListener('change', renderCategories);
+    if (createForm) createForm.addEventListener('submit', handleCreateCategory);
 
     fetchCategories();
 });
@@ -11,13 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function fetchCategories() {
     const statusMsg = document.getElementById('categories-status-msg');
     try {
-        const response = await fetch('/api/categories', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        const response = await fetch('/api/categories', { method: 'GET' });
 
         if (response.ok) {
             const categories = await response.json();
@@ -25,11 +34,7 @@ async function fetchCategories() {
             categoriesCache = await Promise.all(categories.map(async (category) => {
                 try {
                     const notesResponse = await fetch(`/api/notes/by-categories?ids=${category.id}`, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`,
-                            'Content-Type': 'application/json'
-                        }
+                        method: 'GET'
                     });
 
                     if (notesResponse.ok) {
@@ -46,20 +51,25 @@ async function fetchCategories() {
             }));
 
             renderCategories();
+        } else if (response.status === 401 || response.status === 403) {
+            window.location.href = '/login';
         } else {
             statusMsg.innerText = `Failed loading records table metrics. Status: ${response.status}`;
         }
     } catch (err) {
-        statusMsg.innerText = `Network operational connection broke down: ${err.message}`;
+        if (statusMsg) {
+            statusMsg.innerText = `Network operational connection broke down: ${err.message}`;
+        }
     }
 }
 
 function renderCategories() {
     const listContainer = document.getElementById('categories-list');
-    const sortBy = document.getElementById('sort-select').value;
+    const sortSelect = document.getElementById('sort-select');
     const statusMsg = document.getElementById('categories-status-msg');
 
-    statusMsg.innerText = "";
+    if (!listContainer || !sortSelect) return;
+    if (statusMsg) statusMsg.innerText = "";
 
     if (categoriesCache.length === 0) {
         listContainer.innerHTML = `<li class="empty-msg">No categories created yet. Add one above!</li>`;
@@ -67,6 +77,7 @@ function renderCategories() {
     }
 
     let sortedData = [...categoriesCache];
+    const sortBy = sortSelect.value;
 
     if (sortBy === 'alphabetical') {
         sortedData.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
@@ -95,15 +106,15 @@ function renderCategories() {
 async function handleCreateCategory(e) {
     e.preventDefault();
     const inputElement = document.getElementById('new-category-name');
+    if (!inputElement) return;
+
     const nameValue = inputElement.value.trim();
+    if (!nameValue) return;
 
     try {
         const response = await fetch('/api/categories', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`,
-                'Content-Type': 'application/json'
-            },
+            headers: getCsrfConfig(),
             body: JSON.stringify({ name: nameValue })
         });
 
@@ -123,10 +134,7 @@ async function editCategoryName(id, currentName) {
     try {
         const response = await fetch(`/api/categories/${id}`, {
             method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`,
-                'Content-Type': 'application/json'
-            },
+            headers: getCsrfConfig(),
             body: JSON.stringify({ name: newName.trim() })
         });
 
@@ -144,10 +152,7 @@ async function deleteCategory(id) {
     try {
         const response = await fetch(`/api/categories/${id}`, {
             method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`,
-                'Content-Type': 'application/json'
-            }
+            headers: getCsrfConfig()
         });
 
         if (response.ok) {

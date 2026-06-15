@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title th:text="'Noted'">Noted - API Sandbox</title>
 
     <link rel="stylesheet" th:href="@{/login-register/login-style.css}">
@@ -49,6 +51,10 @@
         <label>Password:</label>
         <input type="password" id="reg-password" required minlength="5">
         <span id="error-password" class="validation-error-span" style="color:red; font-size:12px; display:block;"></span>
+
+        <label>Repeat Password:</label>
+        <input type="password" id="reg-repeat-password" required minlength="5">
+        <span id="error-repeat-password" class="validation-error-span" style="color:red; font-size:12px; display:block;"></span>
 
         <label>First Name:</label>
         <input type="text" id="reg-firstname" required

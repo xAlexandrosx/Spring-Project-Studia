@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>Note Editor</title>
 
     <link rel="stylesheet" href="/navbar/navbar.css">
@@ -18,10 +20,13 @@
         <div class="nav-left">
             <button onclick="window.location.href='/my-notes'">My Notes</button>
             <button onclick="window.location.href='/note-editor'">Add New Note</button>
-            <button onclick="window.location.href='/categories'">Categories</button>
+            <button onclick="window.location.href='/categories'" class="active">Categories</button>
         </div>
         <div class="nav-right">
-            <span id="user-identity">Loading user...</span>
+        <span id="user-identity"
+              th:text="'Logged in as: ' + ${#authentication.name}">
+            Logged in as: Guest
+        </span>
             <button id="logout-btn" onclick="logout()">Log Out</button>
         </div>
     </nav>

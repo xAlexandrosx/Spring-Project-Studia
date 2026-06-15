@@ -3,27 +3,37 @@ const noteId = urlParams.get('id');
 
 let userCategoriesMap = new Map();
 
-const getHeaders = () => ({
-    'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`,
-    'Content-Type': 'application/json'
-});
+function getCsrfConfig() {
+    const tokenEl = document.querySelector('meta[name="_csrf"]');
+    const headerEl = document.querySelector('meta[name="_csrf_header"]');
+
+    const headers = { 'Content-Type': 'application/json' };
+
+    if (tokenEl && headerEl) {
+        headers[headerEl.content] = tokenEl.content;
+    }
+
+    return headers;
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
     await loadUserCategoriesCloud();
 
     if (noteId) {
-        document.getElementById('editor-title-display').innerText = `Edit Note #${noteId}`;
+        const titleDisplay = document.getElementById('editor-title-display');
+        if (titleDisplay) {
+            titleDisplay.innerText = `Edit Note #${noteId}`;
+        }
         await populateExistingNoteData(noteId);
     }
 });
 
 async function loadUserCategoriesCloud() {
     const cloudContainer = document.getElementById('categories-pill-cloud');
+    if (!cloudContainer) return;
+
     try {
-        const response = await fetch('/api/categories', {
-            method: 'GET',
-            headers: getHeaders()
-        });
+        const response = await fetch('/api/categories', { method: 'GET' });
 
         if (response.ok) {
             const categories = await response.json();
@@ -38,6 +48,8 @@ async function loadUserCategoriesCloud() {
                 userCategoriesMap.set(cat.name.trim().toLowerCase(), cat.id);
                 return `<span class="category-pill" onclick="appendCategoryToInput('${escapeHtml(cat.name)}')">${escapeHtml(cat.name)}</span>`;
             }).join('');
+        } else if (response.status === 401 || response.status === 403) {
+            window.location.href = '/login';
         } else {
             cloudContainer.innerHTML = '<span class="error-text">Failed to fetch available categories.</span>';
         }
@@ -48,6 +60,8 @@ async function loadUserCategoriesCloud() {
 
 function appendCategoryToInput(catName) {
     const input = document.getElementById('note-categories');
+    if (!input) return;
+
     let currentValues = input.value.trim();
 
     if (currentValues === "") {
@@ -64,10 +78,7 @@ function appendCategoryToInput(catName) {
 async function populateExistingNoteData(id) {
     const statusMsg = document.getElementById('editor-status-msg');
     try {
-        const response = await fetch(`/api/notes/${id}`, {
-            method: 'GET',
-            headers: getHeaders()
-        });
+        const response = await fetch(`/api/notes/${id}`, { method: 'GET' });
 
         if (response.ok) {
             const note = await response.json();
@@ -90,9 +101,13 @@ async function populateExistingNoteData(id) {
 
                 document.getElementById('note-categories').value = namesArray.join(', ');
             }
+        } else if (response.status === 401 || response.status === 403) {
+            window.location.href = '/login';
         } else {
-            statusMsg.style.color = 'red';
-            statusMsg.innerText = `Could not fetch target record. Status: ${response.status}`;
+            if (statusMsg) {
+                statusMsg.style.color = 'red';
+                statusMsg.innerText = `Could not fetch target record. Status: ${response.status}`;
+            }
         }
     } catch (err) {
         console.error("Populate form crash scenario logs:", err);
@@ -102,8 +117,10 @@ async function populateExistingNoteData(id) {
 document.getElementById('note-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     const statusMsg = document.getElementById('editor-status-msg');
-    statusMsg.style.color = "blue";
-    statusMsg.innerText = "Processing payload transactions...";
+    if (statusMsg) {
+        statusMsg.style.color = "blue";
+        statusMsg.innerText = "Processing payload transactions...";
+    }
 
     const categoryRawStr = document.getElementById('note-categories').value;
 
@@ -126,23 +143,29 @@ document.getElementById('note-form').addEventListener('submit', async function(e
     try {
         const response = await fetch(urlTarget, {
             method: httpVerb,
-            headers: getHeaders(),
+            headers: getCsrfConfig(),
             body: JSON.stringify(payload)
         });
 
         if (response.ok) {
-            statusMsg.style.color = "green";
-            statusMsg.innerText = "Success! Saving content modifications. Redirecting...";
+            if (statusMsg) {
+                statusMsg.style.color = "green";
+                statusMsg.innerText = "Success! Saving content modifications. Redirecting...";
+            }
             setTimeout(() => {
                 window.location.href = '/my-notes';
             }, 1000);
         } else {
-            statusMsg.style.color = "red";
-            statusMsg.innerText = `Server error processing update. Backend Status Code: ${response.status}`;
+            if (statusMsg) {
+                statusMsg.style.color = "red";
+                statusMsg.innerText = `Server error processing update. Backend Status Code: ${response.status}`;
+            }
         }
     } catch (err) {
-        statusMsg.style.color = "red";
-        statusMsg.innerText = `Network connection interrupted routing failure: ${err.message}`;
+        if (statusMsg) {
+            statusMsg.style.color = "red";
+            statusMsg.innerText = `Network connection interrupted routing failure: ${err.message}`;
+        }
     }
 });
 
@@ -151,4 +174,3 @@ function escapeHtml(str) {
         .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
-

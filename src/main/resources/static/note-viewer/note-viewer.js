@@ -2,49 +2,51 @@ const urlParams = new URLSearchParams(window.location.search);
 const noteId = urlParams.get('id');
 
 let isNotePublic = false;
-
 let categoryNamesMap = new Map();
 
-const getHeaders = () => {
-    const token = localStorage.getItem('jwt_token');
-    const headers = {
-        'Content-Type': 'application/json'
-    };
+function getCsrfConfig() {
+    const tokenEl = document.querySelector('meta[name="_csrf"]');
+    const headerEl = document.querySelector('meta[name="_csrf_header"]');
 
-    if (token && token !== "null" && token !== "undefined") {
-        headers['Authorization'] = `Bearer ${token}`;
+    const headers = { 'Content-Type': 'application/json' };
+
+    if (tokenEl && headerEl) {
+        headers[headerEl.content] = tokenEl.content;
     }
 
     return headers;
-};
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
     const statusMsg = document.getElementById('viewer-status-msg');
 
     if (!noteId) {
-        statusMsg.style.color = "red";
-        statusMsg.innerText = "Error: No target record ID provided in URL parameters.";
+        if (statusMsg) {
+            statusMsg.style.color = "red";
+            statusMsg.innerText = "Error: No target record ID provided in URL parameters.";
+        }
         return;
     }
 
-    document.getElementById('edit-btn').onclick = () => {
-        window.location.href = `/note-editor?id=${noteId}`;
-    };
+    const editBtn = document.getElementById('edit-btn');
+    const deleteBtn = document.getElementById('delete-btn');
+    const shareBtn = document.getElementById('share-btn');
 
-    document.getElementById('delete-btn').onclick = deleteThisNote;
-    document.getElementById('share-btn').onclick = generateShareLink;
+    if (editBtn) {
+        editBtn.onclick = () => {
+            window.location.href = `/note-editor?id=${noteId}`;
+        };
+    }
+    if (deleteBtn) deleteBtn.onclick = deleteThisNote;
+    if (shareBtn) shareBtn.onclick = generateShareLink;
 
     await fetchAndMapCategoryNames();
-
     await loadNoteData(noteId);
 });
 
 async function fetchAndMapCategoryNames() {
     try {
-        const response = await fetch('/api/categories', {
-            method: 'GET',
-            headers: getHeaders()
-        });
+        const response = await fetch('/api/categories', { method: 'GET' });
 
         if (response.ok) {
             const categories = await response.json();
@@ -62,27 +64,31 @@ async function fetchAndMapCategoryNames() {
 async function loadNoteData(id) {
     const statusMsg = document.getElementById('viewer-status-msg');
     try {
-        const response = await fetch(`/api/notes/${id}`, {
-            method: 'GET',
-            headers: getHeaders()
-        });
+        const response = await fetch(`/api/notes/${id}`, { method: 'GET' });
 
         if (response.ok) {
             const note = await response.json();
 
-            isNotePublic = note.shared;
+            isNotePublic = note.shared === 1 || note.shared === true;
 
-            document.getElementById('note-title').innerText = note.title || 'Untitled Record';
-            document.getElementById('note-content').innerText = note.content || '';
-            document.getElementById('note-meta').innerText = `Record ID: #${note.id} | Added on: ${note.dateAdded || 'N/A'}`;
-
+            const titleEl = document.getElementById('note-title');
+            const contentEl = document.getElementById('note-content');
+            const metaEl = document.getElementById('note-meta');
             const badge = document.getElementById('visibility-badge');
-            if (isNotePublic) {
-                badge.innerText = "PUBLIC";
-                badge.className = "badge badge-public";
-            } else {
-                badge.innerText = "PRIVATE";
-                badge.className = "badge badge-private";
+            const catListEl = document.getElementById('categories-list');
+
+            if (titleEl) titleEl.innerText = note.title || 'Untitled Record';
+            if (contentEl) contentEl.innerText = note.content || '';
+            if (metaEl) metaEl.innerText = `Record ID: #${note.id} | Added on: ${note.dateAdded || 'N/A'}`;
+
+            if (badge) {
+                if (isNotePublic) {
+                    badge.innerText = "PUBLIC";
+                    badge.className = "badge badge-public";
+                } else {
+                    badge.innerText = "PRIVATE";
+                    badge.className = "badge badge-private";
+                }
             }
 
             let formattedCategories = 'None';
@@ -96,15 +102,21 @@ async function loadNoteData(id) {
                 }
             }
 
-            document.getElementById('categories-list').innerText = formattedCategories;
+            if (catListEl) catListEl.innerText = formattedCategories;
 
+        } else if (response.status === 401 || response.status === 403) {
+            window.location.href = '/login';
         } else {
-            statusMsg.style.color = 'red';
-            statusMsg.innerText = `Fetch failed. Endpoint processing error: ${response.status}`;
+            if (statusMsg) {
+                statusMsg.style.color = 'red';
+                statusMsg.innerText = `Fetch failed. Endpoint processing error: ${response.status}`;
+            }
         }
     } catch (err) {
-        statusMsg.style.color = 'red';
-        statusMsg.innerText = `Network/CORS operational break: ${err.message}`;
+        if (statusMsg) {
+            statusMsg.style.color = 'red';
+            statusMsg.innerText = `Network/CORS operational break: ${err.message}`;
+        }
     }
 }
 
@@ -115,21 +127,25 @@ async function deleteThisNote() {
     try {
         const response = await fetch(`/api/notes/${noteId}`, {
             method: 'DELETE',
-            headers: getHeaders()
+            headers: getCsrfConfig()
         });
 
         if (response.ok) {
-            statusMsg.style.color = "green";
-            statusMsg.innerText = "Deleted. Redirecting to system dashboard file index...";
+            if (statusMsg) {
+                statusMsg.style.color = "green";
+                statusMsg.innerText = "Deleted. Redirecting to system dashboard file index...";
+            }
             setTimeout(() => {
                 window.location.href = '/my-notes';
             }, 1000);
         } else {
-            statusMsg.style.color = "red";
-            statusMsg.innerText = `Delete transaction failed on server. Status: ${response.status}`;
+            if (statusMsg) {
+                statusMsg.style.color = "red";
+                statusMsg.innerText = `Delete transaction failed on server. Status: ${response.status}`;
+            }
         }
     } catch (err) {
-        console.error(err);
+        console.error("Error executing delete verification flow:", err);
     }
 }
 
@@ -137,8 +153,10 @@ function generateShareLink() {
     const statusMsg = document.getElementById('viewer-status-msg');
 
     if (!isNotePublic) {
-        statusMsg.style.color = "red";
-        statusMsg.innerText = "Error: Cannot generate share link for PRIVATE notes. Change visibility to public first.";
+        if (statusMsg) {
+            statusMsg.style.color = "red";
+            statusMsg.innerText = "Error: Cannot generate share link for PRIVATE notes. Change visibility to public first.";
+        }
         return;
     }
 
@@ -146,11 +164,15 @@ function generateShareLink() {
 
     navigator.clipboard.writeText(absoluteShareUrl)
         .then(() => {
-            statusMsg.style.color = "green";
-            statusMsg.innerText = "Copied link to clipboard! Anyone logged in can access this explicit endpoint file route.";
+            if (statusMsg) {
+                statusMsg.style.color = "green";
+                statusMsg.innerText = "Copied link to clipboard! Anyone can access this note layout viewer context.";
+            }
         })
         .catch(err => {
-            statusMsg.style.color = "blue";
-            statusMsg.innerText = `Link: ${absoluteShareUrl}`;
+            if (statusMsg) {
+                statusMsg.style.color = "blue";
+                statusMsg.innerText = `Link: ${absoluteShareUrl}`;
+            }
         });
 }

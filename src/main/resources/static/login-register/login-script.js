@@ -12,35 +12,35 @@ document.addEventListener("DOMContentLoaded", () => {
 document.getElementById('login-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     const msgElement = document.getElementById('login-message');
+    if (!msgElement) return;
+
     msgElement.style.color = "blue";
     msgElement.innerText = "Sending request...";
 
-    const payload = {
-        login: document.getElementById('login-username').value,
-        password: document.getElementById('login-password').value
-    };
+    const formData = new URLSearchParams();
+    formData.append('login', document.getElementById('login-username').value.trim());
+    formData.append('password', document.getElementById('login-password').value);
 
     try {
         const response = await fetch('/auth/login', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData.toString()
         });
 
         if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem('jwt_token', data.token);
 
             msgElement.style.color = "green";
-            msgElement.innerText = "Success! Token stored. Redirecting to dashboard...";
-            console.log("JWT Token:", data.token);
+            msgElement.innerText = "Success! Cookie assigned. Redirecting to dashboard...";
 
             setTimeout(() => {
                 window.location.href = '/my-notes';
             }, 800);
         } else {
             msgElement.style.color = "red";
-            msgElement.innerText = "Failed. Status: " + response.status;
+            msgElement.innerText = "Login failed. Check your username or password.";
         }
     } catch (error) {
         msgElement.style.color = "red";
@@ -52,17 +52,19 @@ document.getElementById('register-form').addEventListener('submit', async functi
     e.preventDefault();
 
     const msgElement = document.getElementById('register-message');
+    if (!msgElement) return;
+
     msgElement.style.color = "blue";
     msgElement.innerText = "Sending request...";
 
     document.querySelectorAll('.validation-error-span').forEach(span => span.innerText = "");
 
     const payload = {
-        login: document.getElementById('reg-username').value,
+        login: document.getElementById('reg-username').value.trim(),
         password: document.getElementById('reg-password').value,
-        repeatPassword: document.getElementById('reg-password').value,
-        firstName: document.getElementById('reg-firstname').value,
-        lastName: document.getElementById('reg-lastname').value,
+        repeatPassword: document.getElementById('reg-repeat-password').value,
+        firstName: document.getElementById('reg-firstname').value.trim(),
+        lastName: document.getElementById('reg-lastname').value.trim(),
         birthday: document.getElementById('reg-birthday').value
     };
 
@@ -75,7 +77,7 @@ document.getElementById('register-form').addEventListener('submit', async functi
 
         if (response.ok) {
             msgElement.style.color = "green";
-            msgElement.innerText = "User registered successfully!";
+            msgElement.innerText = "User registered successfully! Proceed to sign in.";
             document.getElementById('register-form').reset();
         } else if (response.status === 400) {
             const errorData = await response.json();

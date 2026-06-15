@@ -1,7 +1,6 @@
 package org.example.config;
 
 import lombok.RequiredArgsConstructor;
-import org.example.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -10,13 +9,9 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
@@ -24,50 +19,48 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/api/users/register", "/auth/login")
+                )
+
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/users/register",
-                                "/auth/login"
-                        ).permitAll()
-                        .requestMatchers(
-                                "/",
-                                "/login",
-                                "/my-notes",
-                                "/note-editor",
-                                "/note-viewer",
-                                "/categories",
-                                "/login-admin",
-                                "/admin-panel",
-                                "/admin-usernotes-preview"
-                        ).permitAll()
-                        .requestMatchers(
-                                "/navbar/**",
-                                "/login-register/**",
-                                "/my-notes/**",
-                                "/note-editor/**",
-                                "/note-viewer/**",
-                                "/categories/**",
-                                "/admin-panel/**"
-                        ).permitAll()
-                        .requestMatchers(
-                                "/error"
-                        ).permitAll()
+                        .requestMatchers("/", "/login", "/login-admin", "/api/users/register", "/error").permitAll()
+                        .requestMatchers("/navbar/**", "/login-register/**", "/categories/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/notes/{id}").permitAll()
 
-                        .anyRequest()
-                        .authenticated()
+                        .requestMatchers("/admin-panel", "/admin-usernotes-preview").hasRole("ADMIN")
+                        .requestMatchers("/admin-panel/**").hasRole("ADMIN")
+
+                        .anyRequest().authenticated()
                 )
-                .httpBasic(withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/auth/login")
+                        .usernameParameter("login")
+                        .passwordParameter("password")
+                        .defaultSuccessUrl("/my-notes", true)
+                        .permitAll()
+                )
+
+                .logout(logout -> logout
+                        .logoutUrl("/auth/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll()
+                )
+
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                )
+
                 .userDetailsService(userDetailsService);
 
         return http.build();

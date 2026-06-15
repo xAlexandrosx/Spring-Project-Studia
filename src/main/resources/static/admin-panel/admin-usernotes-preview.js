@@ -1,28 +1,44 @@
-const token = localStorage.getItem('jwt_token');
 const urlParams = new URLSearchParams(window.location.search);
 const userId = urlParams.get('userId');
 const username = urlParams.get('username') || "User";
 
-if (!token) {
-    window.location.href = '/login';
+function getCsrfConfig() {
+    const tokenEl = document.querySelector('meta[name="_csrf"]');
+    const headerEl = document.querySelector('meta[name="_csrf_header"]');
+
+    const headers = { 'Content-Type': 'application/json' };
+
+    if (tokenEl && headerEl) {
+        headers[headerEl.content] = tokenEl.content;
+    }
+
+    return headers;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    const tbody = document.getElementById('profile-table-body');
+    if (!tbody) return;
+
     if (!userId) {
-        document.getElementById('profile-table-body').innerHTML = `<tr><td colspan="5" style="color:red;">Error: No userId specified in URL parameters.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="color:red;">Error: No userId specified in URL parameters.</td></tr>`;
         return;
     }
 
-    document.getElementById('profile-title').innerText = `Notes profile collection for: ${username}`;
+    const titleEl = document.getElementById('profile-title');
+    if (titleEl) {
+        titleEl.innerText = `Notes profile collection for: ${username}`;
+    }
+
     loadUserNotes();
 });
 
 async function loadUserNotes() {
     const tbody = document.getElementById('profile-table-body');
+    if (!tbody) return;
+
     try {
-        const res = await fetch(`/api/notes/admin/${userId}`, {
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
+        const res = await fetch(`/api/notes/admin/${userId}`, { method: 'GET' });
+
         if (res.ok) {
             const notes = await res.json();
             if (notes.length === 0) {
@@ -47,9 +63,12 @@ async function loadUserNotes() {
                     </td>
                 </tr>
             `).join('');
+        } else if (res.status === 401 || res.status === 403) {
+            window.location.href = '/login';
         }
     } catch (err) {
         tbody.innerHTML = `<tr><td colspan="5" style="color:red;">Failed reading collections.</td></tr>`;
+        console.error("Fetch operational error:", err);
     }
 }
 
@@ -58,43 +77,72 @@ async function saveProfileNoteChanges(noteId) {
         title: document.getElementById(`profile-title-${noteId}`).innerText.trim(),
         content: document.getElementById(`profile-content-${noteId}`).innerText.trim()
     };
-    const res = await fetch(`/api/notes/admin/${noteId}`, {
-        method: 'PUT',
-        headers: {
-            'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-    });
-    if (res.ok) {
-        alert("Modifications stored successfully.");
-        loadUserNotes();
+
+    try {
+        const res = await fetch(`/api/notes/admin/${noteId}`, {
+            method: 'PUT',
+            headers: getCsrfConfig(),
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            alert("Modifications stored successfully.");
+            loadUserNotes();
+        } else {
+            console.error("Admin update override failed. Status:", res.status);
+        }
+    } catch (err) {
+        console.error("Error executing admin note save override:", err);
     }
 }
 
 async function purgeProfileNote(noteId) {
     if (!confirm("Delete note?")) return;
-    const res = await fetch(`/api/notes/admin/${noteId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + token }
-    });
-    if (res.ok) {
-        loadUserNotes();
+
+    try {
+        const res = await fetch(`/api/notes/admin/${noteId}`, {
+            method: 'DELETE',
+            headers: getCsrfConfig()
+        });
+
+        if (res.ok) {
+            loadUserNotes();
+        } else {
+            console.error("Admin delete purge execution failed. Status:", res.status);
+        }
+    } catch (err) {
+        console.error("Error executing admin note drop:", err);
     }
 }
 
 async function changeVisibility(noteId, statusValue) {
-    await fetch(`/api/notes/admin/setShare/${noteId}/${statusValue}`, {
-        method: 'PUT',
-        headers: { 'Authorization': 'Bearer ' + token }
-    });
+    try {
+        const res = await fetch(`/api/notes/admin/setShare/${noteId}/${statusValue}`, {
+            method: 'PUT',
+            headers: getCsrfConfig()
+        });
+
+        if (!res.ok) {
+            console.error("Failed setting share visibility. Status:", res.status);
+        }
+    } catch (err) {
+        console.error("Error updating visibility state:", err);
+    }
 }
 
 function goBack() {
     window.location.href = '/admin-panel';
 }
 
-function logout() {
-    localStorage.removeItem('jwt_token');
-    window.location.href = '/login';
+async function logout() {
+    try {
+        await fetch('/auth/logout', {
+            method: 'POST',
+            headers: getCsrfConfig()
+        });
+        window.location.href = '/login?logout';
+    } catch (err) {
+        console.error("Logout transaction network routing failure:", err);
+        window.location.href = '/login';
+    }
 }

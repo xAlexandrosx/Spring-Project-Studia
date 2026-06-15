@@ -1,7 +1,14 @@
-const token = localStorage.getItem('jwt_token');
+function getCsrfConfig() {
+    const tokenEl = document.querySelector('meta[name="_csrf"]');
+    const headerEl = document.querySelector('meta[name="_csrf_header"]');
 
-if (!token) {
-    window.location.href = '/login';
+    const headers = { 'Content-Type': 'application/json' };
+
+    if (tokenEl && headerEl) {
+        headers[headerEl.content] = tokenEl.content;
+    }
+
+    return headers;
 }
 
 let allUsers = [];
@@ -12,13 +19,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function loadUsers() {
     try {
-        const res = await fetch('/api/users', {
-            method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
+        const res = await fetch('/api/users', { method: 'GET' });
+
         if (res.ok) {
             allUsers = await res.json();
             renderUsersTable();
+        } else if (res.status === 401 || res.status === 403) {
+            window.location.href = '/login';
         }
     } catch (err) {
         console.error("Failed fetching users array:", err);
@@ -27,6 +34,8 @@ async function loadUsers() {
 
 function renderUsersTable() {
     const tbody = document.getElementById('users-table-body');
+    if (!tbody) return;
+
     tbody.innerHTML = allUsers.map(user => {
         const loginName = user.login || user.username || "N/A";
         const fName = user.firstName || "";
@@ -66,29 +75,38 @@ async function saveUser(id, birthdayValue) {
         repeatPassword: ""
     };
 
-    const res = await fetch(`/api/users/${id}`, {
-        method: 'PUT',
-        headers: {
-            'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-    });
+    try {
+        const res = await fetch(`/api/users/${id}`, {
+            method: 'PUT',
+            headers: getCsrfConfig(),
+            body: JSON.stringify(payload)
+        });
 
-    if (res.ok) {
-        alert("User records modified successfully!");
-        loadUsers();
+        if (res.ok) {
+            alert("User records modified successfully!");
+            loadUsers();
+        } else {
+            console.error("Failed to update user. Status:", res.status);
+        }
+    } catch (err) {
+        console.error("Error during user save transaction:", err);
     }
 }
 
 async function deleteUser(id) {
     if (!confirm("Permanently remove user account?")) return;
-    const res = await fetch(`/api/users/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + token }
-    });
-    if (res.ok) {
-        loadUsers();
+
+    try {
+        const res = await fetch(`/api/users/${id}`, {
+            method: 'DELETE',
+            headers: getCsrfConfig()
+        });
+
+        if (res.ok) {
+            loadUsers();
+        }
+    } catch (err) {
+        console.error("Error during user deletion execution:", err);
     }
 }
 
@@ -96,26 +114,39 @@ async function changeUserRole(userId, dropdownElement) {
     const targetRoleId = dropdownElement.value;
     const fallbackId = targetRoleId === "1" ? "3" : "1";
 
-    await fetch(`/api/users/removeRole/${userId}/${fallbackId}`, {
-        method: 'PUT',
-        headers: { 'Authorization': 'Bearer ' + token }
-    });
+    try {
+        await fetch(`/api/users/removeRole/${userId}/${fallbackId}`, {
+            method: 'PUT',
+            headers: getCsrfConfig()
+        });
 
-    const res = await fetch(`/api/users/addRole/${userId}/${targetRoleId}`, {
-        method: 'PUT',
-        headers: { 'Authorization': 'Bearer ' + token }
-    });
+        const res = await fetch(`/api/users/addRole/${userId}/${targetRoleId}`, {
+            method: 'PUT',
+            headers: getCsrfConfig()
+        });
 
-    if (res.ok) {
-        alert("Role update saved.");
+        if (res.ok) {
+            alert("Role update saved.");
+        }
+    } catch (err) {
+        console.error("Error altering user authorization privileges:", err);
     }
 }
 
 function inspectUserNotes(userId, usernameValue) {
-    window.location.href = `/admin-usernotes-preview?userId=${userId}&username=${usernameValue}`;
+    window.location.href = `/admin-usernotes-preview?userId=${userId}&username=${encodeURIComponent(usernameValue)}`;
 }
 
-function logout() {
-    localStorage.removeItem('jwt_token');
-    window.location.href = '/login';
+async function logout() {
+    try {
+        const res = await fetch('/auth/logout', {
+            method: 'POST',
+            headers: getCsrfConfig()
+        });
+
+        window.location.href = '/login?logout';
+    } catch (err) {
+        console.error("Error executing system logout routing:", err);
+        window.location.href = '/login';
+    }
 }
