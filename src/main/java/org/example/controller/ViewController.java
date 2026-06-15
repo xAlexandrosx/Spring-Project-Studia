@@ -33,21 +33,21 @@ public class ViewController {
 
     @GetMapping("/categories")
     public String showCategoriesPage() {
-        return "categories/categories"; // Resolves to templates/categories.html
+        return "categories/categories";
     }
 
     @GetMapping("/login-admin")
     public String showAdminLoginPage() {
-        return "login-register/login-admin"; // Points to templates/login-register/login-admin.html
+        return "login-register/login-admin";
     }
 
     @GetMapping("/admin-panel")
     public String showAdminPanelPage() {
-        return "admin-panel/admin-panel"; // Resolves to templates/admin-panel/admin-panel.html
+        return "admin-panel/admin-panel";
     }
 
     @GetMapping("/admin-usernotes-preview")
     public String showAdminUserNotesPreviewPage() {
-        return "admin-panel/admin-usernotes-preview"; // Points to templates/admin-panel/admin-usernotes-preview.html
+        return "admin-panel/admin-usernotes-preview";
     }
 }

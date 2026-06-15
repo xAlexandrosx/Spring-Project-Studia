@@ -82,7 +82,6 @@ async function populateExistingNoteData(id) {
                 note.categoryIds.forEach(idToFind => {
                     for (let [name, catId] of userCategoriesMap.entries()) {
                         if (catId === idToFind) {
-                            // Capitalize first letter neatly for presentation
                             namesArray.push(name.charAt(0).toUpperCase() + name.slice(1));
                             break;
                         }

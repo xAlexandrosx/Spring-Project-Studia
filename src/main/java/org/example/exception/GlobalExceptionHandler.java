@@ -1,117 +1,103 @@
 package org.example.exception;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
-import org.example.dto.error.ApiErrorResponseDto;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authorization.AuthorizationDeniedException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleIllegalStateException(
-            BadCredentialsException ex, HttpServletRequest request) {
-
-        return buildResponseEntity(HttpStatus.UNAUTHORIZED, "The note is no longer public.", request, null);
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        List<String> mappedErrors = ex.getBindingResult().getAllErrors().stream()
+                .map(this::getErrorMessage)
+                .toList();
+        body.put("errors", mappedErrors);
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler({EntityNotFoundException.class, UsernameNotFoundException.class})
-    public ResponseEntity<ApiErrorResponseDto> handleNotFoundException(
-            Exception ex, HttpServletRequest request) {
-
-        return buildResponseEntity(HttpStatus.NOT_FOUND, ex.getMessage(), request, null);
+    private String getErrorMessage(ObjectError objectError) {
+        if (objectError instanceof FieldError) {
+            String field = ((FieldError) objectError).getField();
+            String defaultMessage = objectError.getDefaultMessage();
+            return field + " " + defaultMessage;
+        }
+        return objectError.getDefaultMessage();
     }
 
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleBadCredentialsException(
-            BadCredentialsException ex, HttpServletRequest request) {
-
-        return buildResponseEntity(HttpStatus.UNAUTHORIZED, "Invalid login credentials provided.", request, null);
-    }
-
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleAuthenticationException(
-            BadCredentialsException ex, HttpServletRequest request) {
-
-        return buildResponseEntity(HttpStatus.UNAUTHORIZED, "You do not have permission to perform that operation.", request, null);
-    }
-
-    @ExceptionHandler(AuthorizationDeniedException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleAuthorizationDeniedException(
-            AuthorizationDeniedException ex, HttpServletRequest request) {
-
-        return buildResponseEntity(HttpStatus.UNAUTHORIZED, "Access denied.", request, null);
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<Object> handleEntityNotFoundException(EntityNotFoundException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.NOT_FOUND.value());
+        body.put("errors", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(RegistrationException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleRegistrationException(
-            BadCredentialsException ex, HttpServletRequest request) {
+    public ResponseEntity<Object> handleRegistrationException(RegistrationException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("errors", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
 
-        return buildResponseEntity(HttpStatus.BAD_REQUEST, "Error during registration.", request, null);
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Object> handleIllegalStateException(IllegalStateException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.UNAUTHORIZED.value());
+        body.put("errors", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Object> handleBadCredentialsException(BadCredentialsException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.UNAUTHORIZED.value());
+        body.put("errors", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Object> handleAuthenticationException(AuthenticationException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.UNAUTHORIZED.value());
+        body.put("errors", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleIllegalArgumentException(
-            IllegalArgumentException ex, HttpServletRequest request) {
-
-        return buildResponseEntity(HttpStatus.BAD_REQUEST, ex.getMessage(), request, null);
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleValidationException(
-            MethodArgumentNotValidException ex, HttpServletRequest request) {
-
-        List<String> validationErrors = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(FieldError::getDefaultMessage)
-                .toList();
-
-        return buildResponseEntity(
-                HttpStatus.BAD_REQUEST,
-                "Request body validation failed.",
-                request,
-                validationErrors
-        );
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponseDto> handleGlobalException(
-            Exception ex, HttpServletRequest request) {
-
-        ex.printStackTrace();
-
-        return buildResponseEntity(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "An unexpected internal server error occurred.",
-                request,
-                null
-        );
-    }
-
-    private ResponseEntity<ApiErrorResponseDto> buildResponseEntity(
-            HttpStatus status, String message, HttpServletRequest request, List<String> details) {
-
-        ApiErrorResponseDto errorResponse = ApiErrorResponseDto.builder()
-                .timestamp(LocalDateTime.now())
-                .status(status.value())
-                .error(status.getReasonPhrase())
-                .message(message)
-                .path(request.getRequestURI())
-                .details(details)
-                .build();
-
-        return new ResponseEntity<>(errorResponse, status);
+    public ResponseEntity<Object> handleIllegalArgumentException(IllegalArgumentException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("errors", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 }
